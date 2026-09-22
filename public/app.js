@@ -497,6 +497,136 @@ function wirePreview() {
   });
 }
 
+/* ================= 只读分享管理 ================= */
+let planShares = [];
+
+function shareStatus(s) {
+  if (s.revoked) return { key: 'dead', label: '已撤销' };
+  if (s.expiresAt !== null) {
+    const left = s.expiresAt - Date.now();
+    if (left <= 0) return { key: 'dead', label: '已过期' };
+    if (left < 60 * 60000) return { key: 'warn', label: '即将过期' };
+  }
+  return { key: 'ok', label: '有效' };
+}
+
+function fmtExpire(s) {
+  if (s.revoked) return '创建于 ' + new Date(s.createdAt).toLocaleString();
+  if (s.expiresAt === null) return '永不过期';
+  return '有效期至 ' + new Date(s.expiresAt).toLocaleString();
+}
+
+function renderShares() {
+  const ul = $('shareList');
+  ul.innerHTML = '';
+  if (!currentPlan) {
+    const li = document.createElement('li');
+    li.className = 'share-empty';
+    li.textContent = '请先载入或保存一个方案';
+    ul.appendChild(li);
+    $('createShareBtn').disabled = true;
+    return;
+  }
+  $('createShareBtn').disabled = false;
+  if (planShares.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'share-empty';
+    li.textContent = '当前方案暂无分享链接';
+    ul.appendChild(li);
+    return;
+  }
+  for (const s of planShares) {
+    const st = shareStatus(s);
+    const li = document.createElement('li');
+
+    const meta = document.createElement('span');
+    meta.className = 'share-meta';
+    const idEl = document.createElement('span');
+    idEl.className = 'share-id';
+    idEl.textContent = '#' + s.id;
+    const expEl = document.createElement('span');
+    expEl.className = 'share-exp';
+    expEl.textContent = fmtExpire(s);
+    meta.append(idEl, expEl);
+
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + st.key;
+    badge.textContent = st.label;
+
+    li.append(meta, badge);
+    if (st.key !== 'dead') {
+      const btn = document.createElement('button');
+      btn.className = 'revoke';
+      btn.textContent = '撤销';
+      btn.addEventListener('click', () => revokeShare(s.id));
+      li.appendChild(btn);
+    }
+    ul.appendChild(li);
+  }
+}
+
+async function refreshShares() {
+  if (!currentPlan) {
+    planShares = [];
+    renderShares();
+    return;
+  }
+  try {
+    const j = await fetch('/api/plans/' + encodeURIComponent(currentPlan) + '/shares').then((r) => r.json());
+    planShares = Array.isArray(j.shares) ? j.shares : [];
+  } catch (e) {
+    planShares = [];
+  }
+  renderShares();
+}
+
+async function createShare() {
+  if (!currentPlan) return;
+  const btn = $('createShareBtn');
+  btn.disabled = true;
+  try {
+    const ttlRaw = $('shareTtl').value;
+    const body = ttlRaw === '' ? {} : { ttlMinutes: Number(ttlRaw) };
+    const res = await fetch('/api/plans/' + encodeURIComponent(currentPlan) + '/shares', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) { alert('生成失败：' + (j.error || res.status)); return; }
+    const url = location.origin + j.url;
+    $('newShareUrl').value = url;
+    $('newShareBox').classList.remove('hidden');
+    await refreshShares();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function revokeShare(id) {
+  if (!confirm('撤销该分享链接？访问者将立即无法查看。')) return;
+  const res = await fetch('/api/shares/' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!res.ok) { alert('撤销失败'); return; }
+  await refreshShares();
+}
+
+function wireShares() {
+  $('createShareBtn').addEventListener('click', createShare);
+  $('copyShareBtn').addEventListener('click', async () => {
+    const input = $('newShareUrl');
+    try {
+      await navigator.clipboard.writeText(input.value);
+      $('copyShareBtn').textContent = '已复制';
+      setTimeout(() => { $('copyShareBtn').textContent = '复制'; }, 1500);
+    } catch (e) {
+      input.select();
+      document.execCommand('copy');
+    }
+  });
+  // 每 30 秒刷新一次状态（过期徽标倒计时）
+  setInterval(renderShares, 30000);
+}
+
 /* ================= 持久化 ================= */
 let saveTimer = null;
 function scheduleAutosave() {
@@ -544,6 +674,7 @@ function wirePlans() {
     currentPlan = name;
     $('planName').value = name;
     applyPlan(await res.json());
+    refreshShares();
   });
 
   $('savePlanBtn').addEventListener('click', async () => {
@@ -559,13 +690,16 @@ function wirePlans() {
     currentPlan = name;
     $('planName').value = name;
     refreshPlanList();
+    refreshShares();
     scheduleAutosave();
   });
 
   $('newPlanBtn').addEventListener('click', () => {
     currentPlan = null;
     $('planName').value = '';
+    $('newShareBox').classList.add('hidden');
     applyPlan({ kiln: { width: 600, height: 450, startTemp: 20, targetTemp: 1300 }, bodies: [] });
+    refreshShares();
   });
 
   $('deletePlanBtn').addEventListener('click', async () => {
@@ -573,8 +707,12 @@ function wirePlans() {
     if (!name) return;
     if (!confirm(`删除方案「${name}」？`)) return;
     await fetch('/api/plans/' + encodeURIComponent(name), { method: 'DELETE' });
-    if (currentPlan === name) currentPlan = null;
+    if (currentPlan === name) {
+      currentPlan = null;
+      $('newShareBox').classList.add('hidden');
+    }
     refreshPlanList();
+    refreshShares();
   });
 
   $('exportBtn').addEventListener('click', () => {
@@ -634,6 +772,7 @@ async function boot() {
   wireKiln();
   wirePreview();
   wirePlans();
+  wireShares();
   $('addBodyBtn').addEventListener('click', () => addBody());
 
   new ResizeObserver(resize).observe($('stage'));
@@ -654,6 +793,7 @@ async function boot() {
   } catch (e) { /* 首次启动无数据 */ }
   if (!loaded) applyPlan(samplePlan());
   refreshPlanList();
+  refreshShares();
 }
 
 boot();

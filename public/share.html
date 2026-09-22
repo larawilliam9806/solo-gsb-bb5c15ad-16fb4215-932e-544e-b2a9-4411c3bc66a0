@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>装窑方案只读分享 · Kiln Pre-check</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="share.css">
+</head>
+<body class="share-body">
+  <header>
+    <h1>🔥 <span id="sharePlanName">装窑方案</span></h1>
+    <span class="readonly-badge">只读分享</span>
+    <span id="updatedAt" class="muted"></span>
+    <span id="liveState" class="muted"></span>
+  </header>
+  <main>
+    <aside id="panel">
+      <section class="card">
+        <h2>窑室与温度</h2>
+        <div id="kilnInfo" class="ro-info"></div>
+      </section>
+
+      <section class="card">
+        <h2>预检结果</h2>
+        <div id="verdict" class="verdict"></div>
+        <ul id="contactList" class="contacts"></ul>
+      </section>
+
+      <section class="card">
+        <h2>坯体</h2>
+        <ul id="bodyList" class="bodies"></ul>
+      </section>
+
+      <section class="card">
+        <h2>预览温度 <span id="previewLabel" class="muted"></span></h2>
+        <input id="previewSlider" type="range">
+        <p class="muted">黄色虚线：升温膨胀后的坯体外廓（仅本地预览）</p>
+      </section>
+    </aside>
+
+    <section id="stage">
+      <canvas id="canvas"></canvas>
+      <div id="hint">只读视图 · 方案修改会在此自动刷新</div>
+      <div id="fatal" class="fatal hidden">
+        <div class="fatal-box">
+          <div id="fatalIcon" class="fatal-icon">🔒</div>
+          <div id="fatalMsg" class="fatal-msg">分享链接无效</div>
+          <a class="fatal-link" href="/">返回首页</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="geometry.js"></script>
+  <script src="share.js"></script>
+</body>
+</html>

@@ -39,6 +39,7 @@ npm test           # 运行几何核心单元测试
   - 红色：给出最早接触温度与涉事对象（坯体↔坯体 / 坯体↔窑壁），画布中以红色高亮并连线标记；
   - 起始温度下已重叠会单独警示。
 - **方案管理**：多方案保存/载入/删除，修改后自动保存；支持导出/导入 JSON 文件。
+- **只读分享**：在管理页为当前方案生成随机令牌链接（可选 1 小时 / 1 天 / 7 天 / 30 天 / 永不过期），访问者无需登录即可在 `/share/:token` 查看该方案**当前**的窑室、温度、坯体与预检结果；页面每 4 秒轮询，原方案修改实时反映。令牌仅保存 SHA-256 哈希，可随时在管理页列出或主动撤销；分享链接只能调用只读接口，任何 POST/PUT/DELETE/PATCH 均返回 405。
 
 ## 计算原理
 
@@ -53,8 +54,16 @@ npm test           # 运行几何核心单元测试
 | GET | `/api/plans` | 列出全部方案名与当前方案 |
 | GET | `/api/plans/:name` | 读取方案 |
 | PUT | `/api/plans/:name` | 保存（新建/覆盖）方案 |
-| DELETE | `/api/plans/:name` | 删除方案 |
+| DELETE | `/api/plans/:name` | 删除方案（其分享令牌同时失效） |
 | POST | `/api/autosave` | 自动保存当前工作方案 |
+| POST | `/api/plans/:name/shares` | 创建只读分享令牌，body `{ "ttlMinutes": 1440 }`（省略或 `null` 为永不过期；范围约 1 秒 ~ 365 天）。明文令牌仅此一次返回 |
+| GET | `/api/plans/:name/shares` | 列出该方案的令牌元信息（不含哈希/明文） |
+| DELETE | `/api/shares/:id` | 撤销令牌（幂等） |
+| GET | `/api/shared/:token` | **公开只读**：凭令牌读取方案当前内容，无需登录；响应 `Cache-Control: no-store` |
+| POST/PUT/DELETE/PATCH | `/api/shared/:token` | 一律 `405`，令牌无法调用任何写入接口 |
+| GET | `/share/:token` | 只读分享页（自动轮询上述只读接口） |
+
+令牌校验在每次请求时依次执行：SHA-256 哈希匹配（定长比较）→ 所属方案存在 → 未撤销 → 未过期；未知/篡改令牌返回 `404`，已撤销/已过期/方案已删返回 `410`。
 
 方案 JSON 结构：
 
@@ -74,11 +83,16 @@ npm test           # 运行几何核心单元测试
 ```
 ├── server.js            # Express 服务：静态托管 + 方案持久化 API
 ├── public/
-│   ├── index.html       # 单页应用
-│   ├── app.js           # 画布交互、实时重算、方案管理
+│   ├── index.html       # 单页应用（管理页）
+│   ├── app.js           # 画布交互、实时重算、方案与分享管理
+│   ├── share.html       # 只读分享页
+│   ├── share.js         # 只读渲染 + 4 秒轮询实时同步
+│   ├── share.css        # 分享页附加样式
 │   ├── geometry.js      # 几何核心：线膨胀 / SAT / 最早接触温度（浏览器与 Node 共用）
 │   └── style.css
-├── test/geometry.test.js# 几何核心单元测试
+├── test/
+│   ├── geometry.test.js # 几何核心单元测试
+│   └── share.test.js    # 只读分享令牌集成测试
 ├── data/plans.json      # 方案数据（运行时自动生成）
 ├── Dockerfile
 └── docker-compose.yml

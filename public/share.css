@@ -1,0 +1,71 @@
+/* 只读分享页附加样式 */
+.readonly-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: rgba(79, 140, 255, 0.15);
+  color: #8ab4ff;
+  border: 1px solid rgba(79, 140, 255, 0.4);
+}
+
+.ro-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.ro-info .ro-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ro-info .ro-row span:last-child {
+  color: #e8ecf5;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 只读页坯体列表不可选中/点击 */
+.bodies.ro li { cursor: default; }
+.bodies.ro li:hover { background: none; }
+
+.fatal {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 26, 0.9);
+}
+.fatal.hidden { display: none; }
+.fatal-box {
+  text-align: center;
+  background: #161d33;
+  border: 1px solid #2c3a63;
+  border-radius: 12px;
+  padding: 32px 44px;
+}
+.fatal-icon { font-size: 40px; margin-bottom: 10px; }
+.fatal-msg { font-size: 15px; color: #ff9d9d; margin-bottom: 14px; }
+.fatal-link {
+  display: inline-block;
+  font-size: 13px;
+  color: #8ab4ff;
+  text-decoration: none;
+  border: 1px solid #2c3a63;
+  border-radius: 6px;
+  padding: 6px 14px;
+}
+.fatal-link:hover { background: #1a2440; }
+
+.dot-pulse {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5be49b;
+  margin-right: 5px;
+}
+.dot-pulse.stale { background: #ffb74d; }
+.dot-pulse.dead { background: #ff5252; }

@@ -135,6 +135,48 @@ button.mini { padding: 2px 8px; font-size: 12px; }
 #editor.hidden { display: none; }
 #previewSlider { width: 100%; }
 
+/* 只读分享管理 */
+.new-share {
+  margin: 6px 0;
+  padding: 8px;
+  border: 1px solid rgba(79, 140, 255, 0.4);
+  border-radius: 8px;
+  background: rgba(79, 140, 255, 0.08);
+}
+.new-share.hidden { display: none; }
+.new-share .row { margin: 0; }
+.new-share input { flex: 1; min-width: 0; font-size: 12px; }
+
+.share-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.share-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-top: 1px solid #232c4a;
+  font-size: 12.5px;
+}
+.share-list .share-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.share-list .share-id { color: #8fa0c5; font-family: ui-monospace, monospace; font-size: 11.5px; }
+.share-list .share-exp { color: #8fa0c5; }
+.share-list .badge {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  flex: none;
+}
+.share-list .badge.ok { background: rgba(46, 204, 113, 0.14); color: #5be49b; }
+.share-list .badge.warn { background: rgba(255, 152, 0, 0.14); color: #ffcc80; }
+.share-list .badge.dead { background: rgba(255, 82, 82, 0.14); color: #ff9d9d; }
+.share-list button.revoke {
+  flex: none;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-color: #7a2e2e;
+  color: #ff8a80;
+}
+.share-empty { color: #8fa0c5; font-size: 12px; padding: 6px 2px; }
+
 #stage { position: relative; min-width: 0; background: #0e1320; }
 #canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #hint {

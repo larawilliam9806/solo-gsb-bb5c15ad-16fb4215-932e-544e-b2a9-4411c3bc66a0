@@ -33,6 +33,27 @@
       </section>
 
       <section class="card">
+        <h2>只读分享</h2>
+        <p class="muted">生成随机令牌链接，访问者无需登录即可查看本方案（实时同步），但不能做任何修改。</p>
+        <div class="row">
+          <select id="shareTtl">
+            <option value="60">1 小时</option>
+            <option value="1440" selected>1 天</option>
+            <option value="10080">7 天</option>
+            <option value="43200">30 天</option>
+            <option value="">永不过期</option>
+          </select>
+          <button id="createShareBtn">生成链接</button>
+        </div>
+        <div id="newShareBox" class="new-share hidden">
+          <input id="newShareUrl" type="text" readonly>
+          <button id="copyShareBtn">复制</button>
+          <p class="muted">请立即复制保存，令牌离开本页后无法再次查看。</p>
+        </div>
+        <ul id="shareList" class="share-list"></ul>
+      </section>
+
+      <section class="card">
         <h2>窑室与温度</h2>
         <label>窑室宽度 (mm)<input id="kilnWidth" type="number" min="50" step="10"></label>
         <label>窑室高度 (mm)<input id="kilnHeight" type="number" min="50" step="10"></label>
