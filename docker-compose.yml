@@ -1,0 +1,13 @@
+services:
+  kiln-precheck:
+    build: .
+    image: kiln-precheck
+    container_name: kiln-precheck
+    ports:
+      - "3000:3000"
+    volumes:
+      - kiln-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  kiln-data:

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>装窑预检 · Kiln Pre-check</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🔥 陶艺工作室装窑预检</h1>
+    <span id="saveState" class="muted"></span>
+  </header>
+  <main>
+    <aside id="panel">
+      <section class="card">
+        <h2>方案</h2>
+        <div class="row">
+          <select id="planSelect"></select>
+          <button id="loadPlanBtn">载入</button>
+          <button id="deletePlanBtn" title="删除选中方案">🗑</button>
+        </div>
+        <div class="row">
+          <input id="planName" placeholder="方案名称" maxlength="40">
+          <button id="savePlanBtn">保存</button>
+          <button id="newPlanBtn">新建</button>
+        </div>
+        <div class="row">
+          <button id="exportBtn">导出 JSON</button>
+          <button id="importBtn">导入 JSON</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>窑室与温度</h2>
+        <label>窑室宽度 (mm)<input id="kilnWidth" type="number" min="50" step="10"></label>
+        <label>窑室高度 (mm)<input id="kilnHeight" type="number" min="50" step="10"></label>
+        <label>起始温度 (°C)<input id="startTemp" type="number" step="5"></label>
+        <label>目标温度 (°C)<input id="targetTemp" type="number" step="10"></label>
+      </section>
+
+      <section class="card">
+        <h2>预检结果</h2>
+        <div id="verdict" class="verdict"></div>
+        <ul id="contactList" class="contacts"></ul>
+      </section>
+
+      <section class="card">
+        <h2>坯体 <button id="addBodyBtn" class="mini">＋添加</button></h2>
+        <ul id="bodyList" class="bodies"></ul>
+      </section>
+
+      <section class="card" id="editorCard">
+        <h2>选中坯体</h2>
+        <div id="editor">
+          <label>名称<input id="edName" type="text" maxlength="30"></label>
+          <label>中心 X (mm)<input id="edX" type="number" step="1"></label>
+          <label>中心 Y (mm)<input id="edY" type="number" step="1"></label>
+          <label>宽度 (mm)<input id="edW" type="number" min="1" step="1"></label>
+          <label>高度 (mm)<input id="edH" type="number" min="1" step="1"></label>
+          <label>旋转角 (°)<input id="edAngle" type="number" step="1"></label>
+          <label>线膨胀系数 α (×10⁻⁶/K)<input id="edAlpha" type="number" min="0" max="100" step="0.1"></label>
+          <button id="deleteBodyBtn" class="danger">删除该坯体</button>
+        </div>
+        <p id="editorEmpty" class="muted">在画布中点击坯体进行编辑</p>
+      </section>
+
+      <section class="card">
+        <h2>预览温度 <span id="previewLabel" class="muted"></span></h2>
+        <input id="previewSlider" type="range">
+        <p class="muted">黄色虚线：升温膨胀后的坯体外廓</p>
+      </section>
+    </aside>
+
+    <section id="stage">
+      <canvas id="canvas"></canvas>
+      <div id="hint">左键拖拽移动 · 拖黄色手柄或滚轮旋转（Shift 微调）· 双击空白添加坯体 · Delete 删除选中</div>
+    </section>
+  </main>
+  <script src="geometry.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

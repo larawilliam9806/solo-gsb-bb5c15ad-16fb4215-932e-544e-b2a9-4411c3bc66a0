@@ -1,0 +1,14 @@
+{
+  "name": "kiln-precheck",
+  "version": "1.0.0",
+  "private": true,
+  "description": "陶艺工作室装窑预检：矩形窑室 + 可旋转矩形坯体热膨胀接触检测",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/geometry.test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

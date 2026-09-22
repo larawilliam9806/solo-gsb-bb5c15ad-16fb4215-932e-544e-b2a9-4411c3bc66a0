@@ -1,0 +1,4 @@
+node_modules/
+data/plans.json
+data/*.tmp
+*.log
