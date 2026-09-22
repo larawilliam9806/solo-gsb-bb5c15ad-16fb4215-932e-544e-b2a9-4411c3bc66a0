@@ -535,6 +535,119 @@ async function refreshPlanList() {
   } catch (e) { /* 离线时忽略 */ }
 }
 
+/* ================= 只读分享 ================= */
+function fmtTime(ts) {
+  return new Date(ts).toLocaleString();
+}
+
+function shareStateOf(s, now) {
+  if (s.revoked) return 'revoked';
+  if (s.expiresAt && s.expiresAt <= now) return 'expired';
+  return 'active';
+}
+
+async function refreshShares() {
+  const ul = $('shareList');
+  const btn = $('createShareBtn');
+  btn.disabled = !currentPlan;
+  $('shareCreated').hidden = true;
+  ul.innerHTML = '';
+  if (!currentPlan) return;
+  let shares = [];
+  try {
+    const j = await fetch('/api/shares?plan=' + encodeURIComponent(currentPlan)).then((r) => r.json());
+    shares = j.shares || [];
+  } catch (e) { return; }
+  shares.sort((a, b) => b.createdAt - a.createdAt);
+  const now = Date.now();
+  const stateText = { active: '有效', expired: '已过期', revoked: '已撤销' };
+  for (const s of shares) {
+    const li = document.createElement('li');
+    const st = shareStateOf(s, now);
+    li.classList.add(st);
+
+    const head = document.createElement('div');
+    head.className = 'share-head';
+    const badge = document.createElement('span');
+    badge.className = 'share-badge ' + st;
+    badge.textContent = stateText[st];
+    const meta = document.createElement('span');
+    meta.className = 'muted';
+    meta.textContent = s.expiresAt
+      ? (st === 'expired' ? `已于 ${fmtTime(s.expiresAt)} 过期` : `有效期至 ${fmtTime(s.expiresAt)}`)
+      : '永不过期';
+    head.append(badge, meta);
+
+    const sub = document.createElement('div');
+    sub.className = 'muted share-time';
+    sub.textContent = `创建于 ${fmtTime(s.createdAt)}`;
+    li.append(head, sub);
+
+    if (st === 'active') {
+      const revoke = document.createElement('button');
+      revoke.className = 'mini share-revoke';
+      revoke.textContent = '撤销';
+      revoke.addEventListener('click', async () => {
+        if (!confirm('撤销该分享链接？访问者将立即无法查看。')) return;
+        const res = await fetch('/api/shares/' + encodeURIComponent(s.id), { method: 'DELETE' });
+        if (res.ok) refreshShares();
+      });
+      li.append(revoke);
+    }
+    ul.appendChild(li);
+  }
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) { /* 忽略 */ }
+    ta.remove();
+    return ok;
+  }
+}
+
+function wireShares() {
+  $('createShareBtn').addEventListener('click', async () => {
+    if (!currentPlan) return;
+    const expireMinutes = $('shareExpire').value;
+    const btn = $('createShareBtn');
+    btn.disabled = true;
+    try {
+      const res = await fetch('/api/shares', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: currentPlan,
+          expireMinutes: expireMinutes === '' ? null : Number(expireMinutes)
+        })
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) { alert('生成失败：' + (j.error || res.status)); return; }
+      const absUrl = new URL(j.url, window.location.href).href;
+      $('shareUrl').value = absUrl;
+      $('shareCreated').hidden = false;
+      refreshShares();
+    } finally {
+      btn.disabled = !currentPlan;
+    }
+  });
+
+  $('copyShareBtn').addEventListener('click', async () => {
+    const btn = $('copyShareBtn');
+    const ok = await copyText($('shareUrl').value);
+    btn.textContent = ok ? '已复制' : '复制失败';
+    setTimeout(() => { btn.textContent = '复制'; }, 1500);
+  });
+}
+
 function wirePlans() {
   $('loadPlanBtn').addEventListener('click', async () => {
     const name = $('planSelect').value;
@@ -544,6 +657,7 @@ function wirePlans() {
     currentPlan = name;
     $('planName').value = name;
     applyPlan(await res.json());
+    refreshShares();
   });
 
   $('savePlanBtn').addEventListener('click', async () => {
@@ -559,6 +673,7 @@ function wirePlans() {
     currentPlan = name;
     $('planName').value = name;
     refreshPlanList();
+    refreshShares();
     scheduleAutosave();
   });
 
@@ -566,6 +681,7 @@ function wirePlans() {
     currentPlan = null;
     $('planName').value = '';
     applyPlan({ kiln: { width: 600, height: 450, startTemp: 20, targetTemp: 1300 }, bodies: [] });
+    refreshShares();
   });
 
   $('deletePlanBtn').addEventListener('click', async () => {
@@ -575,6 +691,7 @@ function wirePlans() {
     await fetch('/api/plans/' + encodeURIComponent(name), { method: 'DELETE' });
     if (currentPlan === name) currentPlan = null;
     refreshPlanList();
+    refreshShares();
   });
 
   $('exportBtn').addEventListener('click', () => {
@@ -634,6 +751,7 @@ async function boot() {
   wireKiln();
   wirePreview();
   wirePlans();
+  wireShares();
   $('addBodyBtn').addEventListener('click', () => addBody());
 
   new ResizeObserver(resize).observe($('stage'));
@@ -654,6 +772,7 @@ async function boot() {
   } catch (e) { /* 首次启动无数据 */ }
   if (!loaded) applyPlan(samplePlan());
   refreshPlanList();
+  refreshShares();
 }
 
 boot();

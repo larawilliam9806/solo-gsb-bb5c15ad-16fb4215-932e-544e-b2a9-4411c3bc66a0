@@ -32,6 +32,26 @@
         </div>
       </section>
 
+      <section class="card" id="shareCard">
+        <h2>只读分享</h2>
+        <p class="muted" id="shareHint">保存或载入方案后，可生成无需登录的只读链接；链接只能查看，不能修改。</p>
+        <div class="row">
+          <select id="shareExpire" title="链接有效期">
+            <option value="60">1 小时</option>
+            <option value="1440" selected>1 天</option>
+            <option value="10080">7 天</option>
+            <option value="43200">30 天</option>
+            <option value="">永不过期</option>
+          </select>
+          <button id="createShareBtn">生成分享链接</button>
+        </div>
+        <div id="shareCreated" class="share-created" hidden>
+          <input id="shareUrl" type="text" readonly>
+          <button id="copyShareBtn" class="mini">复制</button>
+        </div>
+        <ul id="shareList" class="shares"></ul>
+      </section>
+
       <section class="card">
         <h2>窑室与温度</h2>
         <label>窑室宽度 (mm)<input id="kilnWidth" type="number" min="50" step="10"></label>

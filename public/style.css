@@ -150,3 +150,61 @@ button.mini { padding: 2px 8px; font-size: 12px; }
   pointer-events: none;
   white-space: nowrap;
 }
+
+/* ---------- 只读分享管理 ---------- */
+.share-created {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+}
+.share-created input { flex: 1; min-width: 0; font-size: 12px; }
+
+.shares { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.shares li {
+  border: 1px solid #232c4a;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #0e1425;
+}
+.shares li.expired, .shares li.revoked { opacity: 0.6; }
+.share-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.share-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+.share-badge.active { background: rgba(46, 204, 113, 0.15); color: #5be49b; }
+.share-badge.expired { background: rgba(143, 160, 197, 0.15); color: #8fa0c5; }
+.share-badge.revoked { background: rgba(255, 82, 82, 0.15); color: #ff8a80; }
+.share-time { margin-top: 3px; }
+.share-revoke { margin-top: 6px; }
+
+/* ---------- 只读分享页 ---------- */
+.plan-title { font-size: 15px; font-weight: 600; word-break: break-all; }
+.kv { list-style: none; margin: 0; padding: 0; }
+.kv li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(35, 44, 74, 0.6);
+}
+.kv li:last-child { border-bottom: none; }
+.kv span { color: #8fa0c5; }
+
+header #pollState { margin-left: auto; }
+#fatal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #ff8a80;
+  background: rgba(14, 19, 32, 0.94);
+  z-index: 10;
+}

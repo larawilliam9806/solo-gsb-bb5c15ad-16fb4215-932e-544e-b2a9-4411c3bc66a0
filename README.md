@@ -23,7 +23,7 @@ docker build -t kiln-precheck . && docker run -d -p 3000:3000 -v kiln-data:/app/
 ```bash
 npm install
 npm start          # 访问 http://localhost:3000
-npm test           # 运行几何核心单元测试
+npm test           # 运行几何核心与分享令牌单元/端到端测试
 ```
 
 ## 功能与操作
@@ -39,6 +39,7 @@ npm test           # 运行几何核心单元测试
   - 红色：给出最早接触温度与涉事对象（坯体↔坯体 / 坯体↔窑壁），画布中以红色高亮并连线标记；
   - 起始温度下已重叠会单独警示。
 - **方案管理**：多方案保存/载入/删除，修改后自动保存；支持导出/导入 JSON 文件。
+- **只读分享**：为当前方案生成随机令牌链接（如 `/s/<token>`），访问者**无需登录**即可查看该方案当前的窑室、温度、坯体与预检结果；分享页每 4 秒自动刷新，原方案的修改会实时反映。令牌在服务端**仅保存 SHA-256 哈希**，可在管理页列出、主动撤销，并设置 1 小时～30 天或永不过期的有效期；服务端对每次请求重新校验哈希、所属方案、撤销状态与过期时间，令牌**不能调用任何写入接口**（非 GET 请求一律 405）。
 
 ## 计算原理
 
@@ -55,6 +56,33 @@ npm test           # 运行几何核心单元测试
 | PUT | `/api/plans/:name` | 保存（新建/覆盖）方案 |
 | DELETE | `/api/plans/:name` | 删除方案 |
 | POST | `/api/autosave` | 自动保存当前工作方案 |
+| GET | `/api/share/:token` | 凭只读令牌查看方案（无需登录；POST/PUT/DELETE 等返回 405） |
+| GET | `/api/shares` | 列出分享元数据（支持 `?plan=方案名` 过滤，不含哈希） |
+| POST | `/api/shares` | 为方案生成分享令牌 `{plan, expireMinutes}`（`null` 为永不过期），明文令牌仅此次返回 |
+| DELETE | `/api/shares/:id` | 撤销分享（幂等） |
+| GET | `/s/:token` | 只读分享页（浏览器访问） |
+
+只读接口的状态码：`200` 有效；`404` 令牌不存在/格式错误；`405` 使用了写入方法；`410` 令牌已撤销、已过期或所属方案已删除。
+
+`plans.json` 在原结构上扩展 `shares` 数组（旧文件缺少该字段时自动补空，历史方案照常载入）：
+
+```json
+{
+  "current": null,
+  "plans": {},
+  "shares": [
+    {
+      "id": "uuid",
+      "plan": "方案名",
+      "hash": "令牌的 SHA-256 十六进制哈希",
+      "createdAt": 1700000000000,
+      "expiresAt": 1700086400000,
+      "revoked": false,
+      "revokedAt": null
+    }
+  ]
+}
+```
 
 方案 JSON 结构：
 
@@ -72,14 +100,18 @@ npm test           # 运行几何核心单元测试
 ## 项目结构
 
 ```
-├── server.js            # Express 服务：静态托管 + 方案持久化 API
+├── server.js            # Express 服务：静态托管 + 方案持久化 + 只读分享 API
 ├── public/
-│   ├── index.html       # 单页应用
-│   ├── app.js           # 画布交互、实时重算、方案管理
+│   ├── index.html       # 管理端单页应用（含分享管理）
+│   ├── share.html       # 只读分享页（/s/:token，无需登录）
+│   ├── app.js           # 画布交互、实时重算、方案与分享管理
+│   ├── share.js         # 只读分享页：令牌拉取 + 轮询实时刷新
 │   ├── geometry.js      # 几何核心：线膨胀 / SAT / 最早接触温度（浏览器与 Node 共用）
 │   └── style.css
-├── test/geometry.test.js# 几何核心单元测试
-├── data/plans.json      # 方案数据（运行时自动生成）
+├── test/
+│   ├── geometry.test.js # 几何核心单元测试
+│   └── shares.test.js   # 分享令牌端到端测试（哈希校验/撤销/过期/只读/旧数据迁移）
+├── data/plans.json      # 方案与令牌哈希数据（运行时自动生成）
 ├── Dockerfile
 └── docker-compose.yml
 ```

@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node test/geometry.test.js"
+    "test": "node test/geometry.test.js && node test/shares.test.js"
   },
   "dependencies": {
     "express": "^4.19.2"
